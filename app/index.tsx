@@ -1,8 +1,11 @@
 import { signInAnonymously } from "firebase/auth";
 import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { Button, Text, View } from "react-native";
+import { Button, Text, View, StyleSheet,TextInput } from "react-native";
 import app, { auth, db } from "../lib/firebase";
+import LoginHeater from "../components/loginHeater";
+import { Typography } from '../components/Typography';
+import {Boxes} from '../components/boxes';
 
 export default function Index() {
   const [status, setStatus] = useState("Idle");
@@ -31,12 +34,32 @@ export default function Index() {
   }
 
   useEffect(() => { run(); }, []);
-
+  const styles =StyleSheet.create({
+    
+  });
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
-      <Text style={{ fontSize: 18, fontWeight: "600" }}>Firebase connection test</Text>
-      <Text>{status}</Text>
-      <Button title="Run again" onPress={run} />
+    <View style={{ flex: 1,}}>
+      <LoginHeater/>
+      <View style={Boxes.formBox}>
+        <View>
+          <Text style={Typography.h2}>Welcome Back</Text>
+          <Text style={Typography.subtitle}>Log in to continue to Gameseerr</Text>
+        </View>
+        <View>
+          <Text style={Typography.h2}>Email</Text>
+          <TextInput placeholder="your@example.com" keyboardType="email-address" style={[Boxes.textImputBox, Typography.caption]}/>
+        </View>
+        <View>
+          <Text style={Typography.h2}>Password</Text>
+          <TextInput placeholder="**********" secureTextEntry={true} style={[Boxes.textImputBox, Typography.caption]} />
+        </View>
+        <Text style={Typography.link} onPress={()=>{}}>Forgot Password?</Text>
+        <Text style={[Boxes.button, Typography.h4, {color:'#FFFFFF'}]} onPress={()=>{}}>Login</Text>
+        <View style={{display:'flex', flexDirection:'row', justifyContent:'center', gap:5}}>
+          <Text style={Typography.subtitle}>Don't have an account?</Text>
+          <Text style={Typography.link} onPress={() => {}}>Sign Up</Text>
+        </View>
+    </View>
     </View>
   );
 }
