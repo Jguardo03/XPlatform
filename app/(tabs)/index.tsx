@@ -47,18 +47,18 @@ export default function Index() {
           <Text style={Typography.subtitle}>Log in to continue to Gameseerr</Text>
         </View>
         <View>
-          <Text style={Typography.h2}>Email</Text>
-          <TextInput placeholder="your@example.com" keyboardType="email-address" style={[Boxes.textImputBox, Typography.caption]}/>
+          <Text style={Typography.h4}>Email</Text>
+          <TextInput placeholder="your@example.com" keyboardType="email-address" style={[Boxes.textImputBox, Typography.placeholder]}/>
         </View>
         <View>
-          <Text style={Typography.h2}>Password</Text>
-          <TextInput placeholder="**********" secureTextEntry={true} style={[Boxes.textImputBox, Typography.caption]} />
+          <Text style={Typography.h4}>Password</Text>
+          <TextInput placeholder="**********" secureTextEntry={true} style={[Boxes.textImputBox, Typography.placeholder]} />
         </View>
         <Text style={Typography.link} onPress={()=>{}}>Forgot Password?</Text>
         <Text style={[Boxes.button, Typography.h4, {color:'#FFFFFF'}]} onPress={()=>{}}>Login</Text>
         <View style={{display:'flex', flexDirection:'row', justifyContent:'center', gap:5}}>
           <Text style={Typography.subtitle}>Don't have an account?</Text>
-          <Text style={Typography.link} onPress={() => {router.push('/signUp')}}>Sign Up</Text>
+          <Text style={Typography.link} onPress={() => {router.navigate('/signUp')}}>Sign Up</Text>
         </View>
     </View>
     </View>

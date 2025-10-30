@@ -20,11 +20,17 @@ export const Boxes = StyleSheet.create({
     },
     button:{
         display:'flex',
-        backgroundColor:'#497ff5ff',
+        backgroundColor:'#3997fbff',
         padding:15,
         borderRadius:10,
-        alignItems:'center',
+        textAlign:'center',
         justifyContent:'center',
     },
-    
+    checkBox:{
+        width:30,
+        height:30,
+        borderWidth:2,
+        borderColor:'#FFFFFF',
+        borderRadius:5,
+    }
 });
