@@ -1,34 +1,63 @@
+// Tried to keep as close to figma mobile mock ups whilst suiting the firebase setup I created.
+// Juan can you please check how it looks on Android device and Kailing please check on iOS device. still havent fixed my virtualization issues.
+// Let me know what yall think!
+
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import GameCard from "../../components/GameCard";
 import { auth, db } from "../../lib/firebase";
 
-type GameDoc = {
+// Define game structure for Firestore data
+type Game = {
+  id: string;
   title: string;
   coverUrl: string;
-  ratingAvg?: number;
-  developer?: string;
   genres?: string[];
+  ratingAvg?: number;
   platforms?: string[];
 };
 
-type Game = GameDoc & { id: string };
+// Layout constants
+const GAP = 16;       // spacing between cards
+const PAGE_PAD = 16;  // horizontal padding for the page
 
 export default function Home() {
-  const [games, setGames] = useState<Game[]>([]);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  // -------------------------------
+  // 🔹 State variables
+  // -------------------------------
+  const [games, setGames] = useState<Game[]>([]); // list of all games from Firestore
+  const [loading, setLoading] = useState(true);   // loader until games are fetched
+  const [search, setSearch] = useState("");       // text input search term
+  const [genreFilter, setGenreFilter] = useState("All");       // selected genre
+  const [platformFilter, setPlatformFilter] = useState("All"); // selected platform
 
+  const router = useRouter();
+  const { width } = useWindowDimensions();
+
+  // -------------------------------
+  // 🔹 Fetch all games from Firestore
+  // -------------------------------
   useEffect(() => {
     const fetchGames = async () => {
       try {
         const q = query(collection(db, "games"), orderBy("ratingAvg", "desc"));
         const snap = await getDocs(q);
-        const data: Game[] = snap.docs.map(d => ({
+        const data: Game[] = snap.docs.map((d) => ({
           id: d.id,
-          ...(d.data() as GameDoc),
+          ...(d.data() as Omit<Game, "id">),
         }));
         setGames(data);
       } catch (e) {
@@ -40,16 +69,67 @@ export default function Home() {
     fetchGames();
   }, []);
 
-  // Added sign-out logic
+  // -------------------------------
+  // 🔹 Sign-out logic
+  // -------------------------------
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-      router.replace("/"); // go back to login
+      router.replace("/"); // navigate back to login
     } catch (e) {
       console.error("Error signing out:", e);
     }
   };
 
+  // -------------------------------
+  // 🔹 Responsive grid columns (adjust per screen width)
+  // -------------------------------
+  const numColumns = useMemo(() => {
+    if (width >= 1200) return 3; // large desktop
+    if (width >= 900) return 2;  // tablet / wide web
+    return 1;                    // mobile
+  }, [width]);
+
+  // -------------------------------
+  // 🔹 Compute item width per column (keeps consistent aspect ratio)
+  // -------------------------------
+  const itemWidth = useMemo(() => {
+    const totalGaps = (numColumns - 1) * GAP;
+    const usable = Math.max(0, width - PAGE_PAD * 2 - totalGaps);
+    return Math.floor(usable / numColumns);
+  }, [width, numColumns]);
+
+  // -------------------------------
+  // 🔹 Combined search + filter logic
+  // -------------------------------
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    return games.filter((g) => {
+      // search match: title, genre, or platform
+      const matchesSearch =
+        !q ||
+        g.title.toLowerCase().includes(q) ||
+        g.genres?.some((x) => x.toLowerCase().includes(q)) ||
+        g.platforms?.some((x) => x.toLowerCase().includes(q));
+
+      // genre match (if user selected a genre)
+      const matchesGenre =
+        genreFilter === "All" ||
+        g.genres?.some((x) => x.toLowerCase() === genreFilter.toLowerCase());
+
+      // platform match (if user selected a platform)
+      const matchesPlatform =
+        platformFilter === "All" ||
+        g.platforms?.some((x) => x.toLowerCase() === platformFilter.toLowerCase());
+
+      return matchesSearch && matchesGenre && matchesPlatform;
+    });
+  }, [games, search, genreFilter, platformFilter]);
+
+  // -------------------------------
+  // 🔹 Loading state
+  // -------------------------------
   if (loading) {
     return (
       <View style={styles.center}>
@@ -58,9 +138,12 @@ export default function Home() {
     );
   }
 
+  // -------------------------------
+  // 🔹 Render main screen
+  // -------------------------------
   return (
-    <View style={styles.container}>
-      {/* Sign-out button at top right */}
+    <View style={styles.screen}>
+      {/* Header Bar */}
       <View style={styles.topBar}>
         <Text style={styles.heading}>Discover Games</Text>
         <TouchableOpacity onPress={handleSignOut}>
@@ -68,20 +151,80 @@ export default function Home() {
         </TouchableOpacity>
       </View>
 
+      {/* Search + filters row */}
+      <View style={styles.controlsRow}>
+        {/* Search bar */}
+        <View style={styles.searchWrap}>
+          <Ionicons name="search" size={18} style={styles.searchIcon} />
+          <TextInput
+            placeholder="Search games..."
+            placeholderTextColor="#9aa3af"
+            value={search}
+            onChangeText={setSearch}
+            style={styles.searchInput}
+          />
+        </View>
+
+        {/* Filter: genre (simple toggle cycle) */}
+        <TouchableOpacity
+          style={styles.fakeDropdown}
+          onPress={() => {
+            // simple rotation of filter options for now
+            const next =
+              genreFilter === "All"
+                ? "Action"
+                : genreFilter === "Action"
+                ? "RPG"
+                : genreFilter === "RPG"
+                ? "Adventure"
+                : "All";
+            setGenreFilter(next);
+          }}
+        >
+          <MaterialIcons name="filter-list" size={18} color="#9aa3af" />
+          <Text style={styles.fakeDropdownText}>{genreFilter}</Text>
+          <MaterialIcons name="keyboard-arrow-down" size={18} color="#9aa3af" />
+        </TouchableOpacity>
+
+        {/* Filter: platform (simple toggle cycle) */}
+        <TouchableOpacity
+          style={styles.fakeDropdown}
+          onPress={() => {
+            const next =
+              platformFilter === "All"
+                ? "PC"
+                : platformFilter === "PC"
+                ? "PS5"
+                : platformFilter === "PS5"
+                ? "Xbox"
+                : "All";
+            setPlatformFilter(next);
+          }}
+        >
+          <Text style={styles.fakeDropdownText}>{platformFilter}</Text>
+          <MaterialIcons name="keyboard-arrow-down" size={18} color="#9aa3af" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Count text below filters */}
+      <Text style={styles.countText}>{filtered.length} games found</Text>
+
+      {/* Main grid list */}
       <FlatList
-        data={games}
-        keyExtractor={item => item.id}
+        data={filtered}
+        key={numColumns} // force reflow when layout changes
+        numColumns={numColumns}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{
+          paddingBottom: 40,
+          paddingHorizontal: PAGE_PAD,
+          rowGap: GAP,
+          alignItems: "flex-start",
+        }}
+        columnWrapperStyle={numColumns > 1 ? { columnGap: GAP } : undefined}
         renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Image source={{ uri: item.coverUrl }} style={styles.image} />
-            <View style={styles.info}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.sub}>
-                {item.genres?.join(", ")}
-                {item.ratingAvg ? ` · ⭐ ${item.ratingAvg.toFixed(1)}` : ""}
-              </Text>
-              <Text style={styles.platforms}>{item.platforms?.join(" | ")}</Text>
-            </View>
+          <View style={{ width: itemWidth }}>
+            <GameCard game={item} />
           </View>
         )}
       />
@@ -89,21 +232,79 @@ export default function Home() {
   );
 }
 
+// -------------------------------
+// 🔹 Styles
+// -------------------------------
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0A0F1A", padding: 16, paddingTop: 40 },
+  screen: {
+    flex: 1,
+    backgroundColor: "#0b1220",
+    paddingTop: 40,
+  },
   topBar: {
+    paddingHorizontal: PAGE_PAD,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 16,
   },
   heading: { color: "#F3F4F6", fontSize: 22, fontWeight: "800" },
   signOut: { color: "#60A5FA", fontSize: 14, fontWeight: "600" },
-  card: { backgroundColor: "#111827", borderRadius: 16, marginBottom: 14, overflow: "hidden" },
-  image: { width: "100%", height: 160 },
-  info: { padding: 12 },
-  title: { color: "#F3F4F6", fontSize: 16, fontWeight: "700" },
-  sub: { color: "#9CA3AF", fontSize: 13, marginTop: 4 },
-  platforms: { color: "#9CA3AF", fontSize: 12, marginTop: 6 },
-  center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0A0F1A" },
+
+  controlsRow: {
+    paddingHorizontal: PAGE_PAD,
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 12,
+    marginBottom: 8,
+  },
+  searchWrap: {
+    flexGrow: 1,
+    flexShrink: 1,
+    minWidth: 220,
+    height: 42,
+    borderRadius: 10,
+    backgroundColor: "#111827",
+    borderWidth: 1,
+    borderColor: "#1f2937",
+    paddingLeft: 36,
+    paddingRight: 12,
+    justifyContent: "center",
+  },
+  searchIcon: {
+    position: "absolute",
+    left: 12,
+    top: 12,
+    color: "#9aa3af",
+  },
+  searchInput: {
+    color: "#e5e7eb",
+    fontSize: 14,
+  },
+  fakeDropdown: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    height: 42,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: "#111827",
+    borderWidth: 1,
+    borderColor: "#1f2937",
+  },
+  fakeDropdownText: { color: "#e5e7eb" },
+  countText: {
+    paddingHorizontal: PAGE_PAD,
+    color: "#9aa3af",
+    fontSize: 12,
+    marginBottom: 8,
+  },
+
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#0A0F1A",
+  },
 });
