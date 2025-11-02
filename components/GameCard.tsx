@@ -7,7 +7,7 @@
 
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Image, Platform, StyleSheet, Text, View } from "react-native";
+import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 // Type definition for a single Game object passed from Firestore
 type Props = {
@@ -19,10 +19,13 @@ type Props = {
     ratingAvg?: number;     // average rating
     platforms?: string[];   // e.g. ["PC", "PS5", "Xbox"]
   };
+  onAddToWishList:() => void; // Callback when heart icon is pressed
 };
 
 // Main component: displays one game card
-export default function GameCard({ game }: Props) {
+export default function GameCard({ game, onAddToWishList }: Props) {
+
+
   return (
     // Outer card container
     <View style={styles.card}>
@@ -42,8 +45,10 @@ export default function GameCard({ game }: Props) {
           {/* Truncate long titles with ... */}
           <Text numberOfLines={1} style={styles.title}>{game.title}</Text>
 
-          {/* Placeholder for future “favorite” feature */}
-          <Ionicons name="heart-outline" size={18} color="#cbd5e1" />
+          {/* Add to wishlist presable */}
+          <Pressable onPress={onAddToWishList}>
+          <Ionicons name="heart-outline" size={30} color="#cbd5e1" />
+          </Pressable>
         </View>
 
         {/* ── Meta row: genres + star rating ── */}

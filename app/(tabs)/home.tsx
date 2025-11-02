@@ -5,7 +5,7 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { addDoc, collection, getDocs, orderBy, query } from "firebase/firestore";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -17,6 +17,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import GameCard from "../../components/GameCard";
 import { auth, db } from "../../lib/firebase";
 
@@ -29,6 +30,15 @@ type Game = {
   ratingAvg?: number;
   platforms?: string[];
 };
+
+//Define user structure for Firestore data
+type User = {
+  uid: string;
+  email: string;
+  username: string;
+  createdAt: Date;
+  avatarUrl: string;
+}
 
 // Layout constants
 const GAP = 16;       // spacing between cards
@@ -43,6 +53,8 @@ export default function Home() {
   const [search, setSearch] = useState("");       // text input search term
   const [genreFilter, setGenreFilter] = useState("All");       // selected genre
   const [platformFilter, setPlatformFilter] = useState("All"); // selected platform
+  
+  
 
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -127,6 +139,40 @@ export default function Home() {
     });
   }, [games, search, genreFilter, platformFilter]);
 
+  // -------------------------------
+  // 🔹 Add to wtishlist
+  // -------------------------------
+
+  const addToWishList = async (game: Game) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        console.error("No user is signed in");
+        return;
+      }
+
+      await addDoc(collection(db, "users", user.uid, "wishlist"), {
+        gameId: game.id,
+        title: game.title,
+        coverUrl: game.coverUrl,
+        genres: game.genres,
+        ratingAvg: game.ratingAvg,
+        platforms: game.platforms,
+        createdAt: new Date(),
+      });
+      console.log(`${game.title} added to wishlist`);
+      Toast.show({
+        type: "success",
+        text1: `${game.title} added to wishlist`,
+      });
+      }catch (e) {
+      console.error("Error adding to wishlist:", e);
+      Toast.show({
+        type: "error",
+        text1: "Error adding to wishlist",
+      });
+      }
+    };
   // -------------------------------
   // 🔹 Loading state
   // -------------------------------
@@ -224,7 +270,8 @@ export default function Home() {
         columnWrapperStyle={numColumns > 1 ? { columnGap: GAP } : undefined}
         renderItem={({ item }) => (
           <View style={{ width: itemWidth }}>
-            <GameCard game={item} />
+            {/* Game card component + add to wish list implementation */}
+            <GameCard game={item} onAddToWishList={()=> addToWishList(item)} />
           </View>
         )}
       />
