@@ -43,4 +43,4 @@ app-example
 /android
 
 # firebase config
-#/config/config.ts
+/config/config.ts
