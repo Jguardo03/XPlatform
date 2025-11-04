@@ -20,12 +20,12 @@ import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
 } from "firebase/auth";
-import { auth } from "../../lib/firebase";
+import { auth } from "../lib/firebase";
 
 // Your UI components (unchanged)
-import { Boxes } from "../../components/boxes";
-import LoginHeater from "../../components/loginHeater";
-import { Typography } from "../../components/Typography";
+import { Boxes } from "../components/boxes";
+import LoginHeater from "../components/loginHeater";
+import { Typography } from "../components/Typography";
 
 export default function Index() {
   const router = useRouter();

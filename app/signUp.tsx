@@ -14,11 +14,11 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-
 
 import { createUserWithEmailAndPassword, signOut, updateProfile } from "firebase/auth";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { auth, db } from "../../lib/firebase";
+import { auth, db } from "../lib/firebase";
 
-import { Boxes } from "../../components/boxes";
-import LoginHeater from "../../components/loginHeater";
-import { Typography } from "../../components/Typography";
+import { Boxes } from "../components/boxes";
+import LoginHeater from "../components/loginHeater";
+import { Typography } from "../components/Typography";
 
 export default function SignUp() {
   const router = useRouter();
