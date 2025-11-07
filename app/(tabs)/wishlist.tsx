@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDocs, orderBy, query, onSnapshot } from "firebase/firestore";
 import React, { useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
@@ -11,6 +11,7 @@ import {
 import Toast from "react-native-toast-message";
 import GameCard from "../../components/GameCard";
 import { auth, db } from "../../lib/firebase";
+
 
 // Define game structure for Firestore data
 type Game = {
@@ -55,12 +56,13 @@ export default function WishlistScreen() {
                     return;
                 }
             const q = query(collection(db, "users",user.uid, "wishlist"), orderBy("createdAt", "desc"));
-            const snap = await getDocs(q);
-            const data: Game[] = snap.docs.map((d) => ({
-            id: d.id,
-            ...(d.data() as Omit<Game, "id">),
-            }));
-            setGames(data);
+            return onSnapshot(q, (querySnapshot) => {
+                const data: Game[] = querySnapshot.docs.map((d) => ({
+                    id: d.id,
+                    ...(d.data() as Omit<Game, "id">),
+                }));
+                setGames(data);
+            });
         } catch (e) {
             console.error("Error fetching games:", e);
         } finally {
@@ -89,7 +91,7 @@ export default function WishlistScreen() {
     }, [width, numColumns]);
 
     // -------------------------------
-    // 🔹 Delete from wishlist (need to be re-design to be livedata not querry)
+    // 🔹 Delete from wishlist 
     // -------------------------------
     const deleteFromWishlist = async (game: Game) => {
         try {
@@ -135,7 +137,7 @@ export default function WishlistScreen() {
         <View style={styles.screen}>
               {/* Header Bar */}
             <View style={styles.topBar}>
-                <Text style={styles.heading}>Discover Games</Text>
+                <Text style={styles.heading}>Wishlist </Text>
             </View>
             {/* Main grid list */}
                 <FlatList
