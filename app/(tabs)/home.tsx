@@ -5,7 +5,7 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
-import { addDoc, collection, getDocs, orderBy, query } from "firebase/firestore";
+import { addDoc, collection, doc, getDocs, onSnapshot, orderBy, query } from "firebase/firestore";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -172,7 +172,8 @@ export default function Home() {
         text1: "Error adding to wishlist",
       });
       }
-    };
+  };
+  
   // -------------------------------
   // 🔹 Loading state
   // -------------------------------

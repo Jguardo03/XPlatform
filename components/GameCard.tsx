@@ -20,11 +20,13 @@ type Props = {
     platforms?: string[];   // e.g. ["PC", "PS5", "Xbox"]
   };
   onAddToWishList:() => void; // Callback when heart icon is pressed
-};
+}; 
+
 
 // Main component: displays one game card
-export default function GameCard({ game, onAddToWishList }: Props) {
+export default function GameCard({ game, onAddToWishList}: Props) {
 
+  
 
   return (
     // Outer card container
@@ -47,8 +49,11 @@ export default function GameCard({ game, onAddToWishList }: Props) {
 
           {/* Add to wishlist presable */}
           <Pressable onPress={onAddToWishList}>
+            
           <Ionicons name="heart-outline" size={30} color="#cbd5e1" />
+          
           </Pressable>
+
         </View>
 
         {/* ── Meta row: genres + star rating ── */}
