@@ -4,7 +4,16 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
-import { addDoc, collection, getDocs, orderBy, query } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+} from "firebase/firestore";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -30,7 +39,7 @@ type Game = {
   platforms?: string[];
 };
 
-//Define user structure for Firestore data (not used here but kept for later)
+//Define user structure for Firestore data
 type User = {
   uid: string;
   email: string;
@@ -52,6 +61,9 @@ export default function Home() {
   const [search, setSearch] = useState("");       // text input search term
   const [genreFilter, setGenreFilter] = useState("All");       // selected genre
   const [platformFilter, setPlatformFilter] = useState("All"); // selected platform
+
+  // Map of gameId -> wishlist document id (used to show pink heart + remove)
+  const [wishlistMap, setWishlistMap] = useState<Record<string, string>>({});
 
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -76,6 +88,28 @@ export default function Home() {
       }
     };
     fetchGames();
+  }, []);
+
+  // -------------------------------
+  // 🔹 Listen to wishlist so hearts stay in sync
+  // -------------------------------
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const q = query(collection(db, "users", user.uid, "wishlist"));
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const next: Record<string, string> = {};
+      snap.forEach((d) => {
+        const data = d.data() as { gameId?: string };
+        if (data.gameId) {
+          next[data.gameId] = d.id;
+        }
+      });
+      setWishlistMap(next);
+    });
+
+    return unsubscribe;
   }, []);
 
   // -------------------------------
@@ -167,9 +201,40 @@ export default function Home() {
         type: "error",
         text1: "Error adding to wishlist",
       });
-      }
+    }
   };
-  
+
+  // -------------------------------
+  // 🔹 Remove from wishlist
+  // -------------------------------
+  const removeFromWishList = async (game: Game) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        console.error("No user is signed in");
+        return;
+      }
+
+      const wishlistDocId = wishlistMap[game.id];
+      if (!wishlistDocId) {
+        return;
+      }
+
+      await deleteDoc(doc(db, "users", user.uid, "wishlist", wishlistDocId));
+      console.log(`${game.title} removed from wishlist`);
+      Toast.show({
+        type: "success",
+        text1: `${game.title} removed from wishlist`,
+      });
+    } catch (e) {
+      console.error("Error removing from wishlist:", e);
+      Toast.show({
+        type: "error",
+        text1: "Error removing from wishlist",
+      });
+    }
+  };
+
   // -------------------------------
   // 🔹 Loading state
   // -------------------------------
@@ -265,20 +330,31 @@ export default function Home() {
           alignItems: "flex-start",
         }}
         columnWrapperStyle={numColumns > 1 ? { columnGap: GAP } : undefined}
-        renderItem={({ item }) => (
-          <View style={{ width: itemWidth }}>
-            <GameCard
-              game={item}
-              onAddToWishList={() => addToWishList(item)}
-              onPress={() =>
-                router.push({
-                  pathname: "/(tabs)/game/[id]", 
-                  params: { id: String(item.id) },
-                })
-              }
-            />
-          </View>
-        )}
+        renderItem={({ item }) => {
+          const isWishlisted = !!wishlistMap[item.id];
+
+          return (
+            <View style={{ width: itemWidth }}>
+              <GameCard
+                game={item}
+                // If not in wishlist yet, allow adding
+                onAddToWishList={
+                  !isWishlisted ? () => addToWishList(item) : undefined
+                }
+                // If already in wishlist, show pink heart and allow removing
+                onRemoveFromWishList={
+                  isWishlisted ? () => removeFromWishList(item) : undefined
+                }
+                onPress={() =>
+                  router.push({
+                    pathname: "/(tabs)/game/[id]",
+                    params: { id: String(item.id) },
+                  })
+                }
+              />
+            </View>
+          );
+        }}
       />
     </View>
   );
