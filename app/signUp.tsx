@@ -1,11 +1,11 @@
 // app/signUp.tsx
-// SIGN-UP SCREEN (UI unchanged)
+// SIGN-UP SCREEN (Kept your UI Juan but hsad to change most logic to add firestore)
 //
 // What this does:
 // • Creates an Auth user with Email/Password
 // • Writes a minimal profile doc to Firestore: users/{uid}
 // • Immediately signs the user out (so Login shows next; prevents auto-skip)
-// • Redirects back to "/" (your Login screen)
+// • Redirects back to login screen
 // • Clear status/busy handling and reliable tap target
 
 import { useRouter } from "expo-router";

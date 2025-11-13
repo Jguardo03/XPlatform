@@ -135,7 +135,7 @@ export default function WishlistScreen() {
         <View style={styles.screen}>
               {/* Header Bar */}
             <View style={styles.topBar}>
-                <Text style={styles.heading}>Discover Games</Text>
+                <Text style={styles.heading}>Wishlist</Text>
             </View>
             {/* Main grid list */}
                 <FlatList

@@ -14,77 +14,66 @@ type Props = {
   game: {
     id: string;
     title: string;
-    coverUrl: string;       // Game image URL (banner/cover)
-    genres?: string[];      // e.g. ["Action", "RPG"]
-    ratingAvg?: number;     // average rating
-    platforms?: string[];   // e.g. ["PC", "PS5", "Xbox"]
+    coverUrl: string;
+    genres?: string[];
+    ratingAvg?: number;
+    platforms?: string[];
   };
-  onAddToWishList:() => void; // Callback when heart icon is pressed
+  onAddToWishList?: () => void;
+  onRemoveFromWishList?: () => void;
+  onPress?: () => void;
 };
 
-// Main component: displays one game card
-export default function GameCard({ game, onAddToWishList }: Props) {
-
+export default function GameCard({ game, onAddToWishList, onRemoveFromWishList, onPress }: Props) {
+  const isInWishlistContext = !!onRemoveFromWishList;
+  const onPressHeart = isInWishlistContext ? onRemoveFromWishList : onAddToWishList;
 
   return (
-    // Outer card container
-    <View style={styles.card}>
-      {/* Cover image (banner at top of card) */}
-      <Image
-        // fallback placeholder if no image available
-        source={{ uri: game.coverUrl || "" }} // Should add url here later
-        style={styles.cover}
-        resizeMode="cover" // crop to fill width nicely
-      />
+    <Pressable onPress={onPress} android_ripple={{ color: "#111827" }}>
+      <View style={styles.card}>
+        <Image source={{ uri: game.coverUrl || "" }} style={styles.cover} resizeMode="cover" />
+        <View style={styles.body}>
+          <View style={styles.titleRow}>
+            <Text numberOfLines={1} style={styles.title}>{game.title}</Text>
+            {!!onPressHeart && (
+              <Pressable onPress={(e) => { e.stopPropagation(); onPressHeart?.(); }}>
+                <Ionicons
+                  name={isInWishlistContext ? "heart" : "heart-outline"}
+                  size={28}
+                  color={isInWishlistContext ? "#ef4444" : "#cbd5e1"}
+                />
+              </Pressable>
+            )}
+          </View>
 
-      {/* Card body (text content below image) */}
-      <View style={styles.body}>
+          <View style={styles.metaRow}>
+            {(game.genres ?? []).slice(0, 2).map(g => (
+              <Text key={g} style={styles.metaSmall}>{g}</Text>
+            ))}
+            {typeof game.ratingAvg === "number" && (
+              <>
+                <Ionicons name="star" size={14} color="#fbbf24" />
+                <Text style={styles.metaSmall}>{game.ratingAvg.toFixed(1)}</Text>
+              </>
+            )}
+          </View>
 
-        {/* ── Title row: game name + heart icon ── */}
-        <View style={styles.titleRow}>
-          {/* Truncate long titles with ... */}
-          <Text numberOfLines={1} style={styles.title}>{game.title}</Text>
-
-          {/* Add to wishlist presable */}
-          <Pressable onPress={onAddToWishList}>
-          <Ionicons name="heart-outline" size={30} color="#cbd5e1" />
-          </Pressable>
-        </View>
-
-        {/* ── Meta row: genres + star rating ── */}
-        <View style={styles.metaRow}>
-          {/* Display up to 2 genres (Action, RPG, etc.) */}
-          {(game.genres ?? []).slice(0, 2).map(g => (
-            <Text key={g} style={styles.metaSmall}>{g}</Text>
-          ))}
-
-          {/* If rating exists, show icon + number */}
-          {typeof game.ratingAvg === "number" && (
-            <>
-              <Ionicons name="star" size={14} color="#fbbf24" />
-              <Text style={styles.metaSmall}>{game.ratingAvg.toFixed(1)}</Text>
-            </>
-          )}
-        </View>
-
-        {/* ── Platforms row: small “chips” for PC/PS5/etc ── */}
-        <View style={styles.chipsRow}>
-          {/* Display up to 3 platform chips */}
-          {(game.platforms ?? []).slice(0, 3).map(p => (
-            <View key={p} style={styles.chip}>
-              <Text style={styles.chipText}>{p}</Text>
-            </View>
-          ))}
-
-          {/* If more than 3, show “+N” chip (e.g. +2) */}
-          {game.platforms && game.platforms.length > 3 && (
-            <View style={styles.chip}>
-              <Text style={styles.chipText}>+{game.platforms.length - 3}</Text>
-            </View>
-          )}
+          {/* Platforms: single line only — 2 chips max + "+N" to keep card heights identical */}
+          <View style={styles.chipsRow}>
+            {(game.platforms ?? []).slice(0, 2).map(p => (
+              <View key={p} style={styles.chip}>
+                <Text style={styles.chipText}>{p}</Text>
+              </View>
+            ))}
+            {game.platforms && game.platforms.length > 2 && (
+              <View style={styles.chip}>
+                <Text style={styles.chipText}>+{game.platforms.length - 2}</Text>
+              </View>
+            )}
+          </View>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -95,17 +84,17 @@ const COVER_H = Platform.OS === "web" ? 220 : 200;
 const styles = StyleSheet.create({
   // Outer card wrapper
   card: {
-    backgroundColor: "#0f172a", 
+    backgroundColor: "#0f172a",
     borderRadius: 14,
     overflow: "hidden",         // ensures rounded corners apply to image
     borderWidth: 1,
-    borderColor: "#1f2937",    
+    borderColor: "#1f2937",
     flex: 1,                    // expand evenly within a grid cell
   },
 
   // Cover image area
   cover: {
-    width: "100%",              // full card width
+    width: "100%",
     height: COVER_H,            // fixed banner height
   },
 
@@ -113,11 +102,12 @@ const styles = StyleSheet.create({
   body: {
     padding: 12,
     gap: 6,                     // space between inner rows
+    minHeight: 92,              // keeps cards visually even
   },
 
   // Title row (title + favorite icon)
   titleRow: {
-    flexDirection: "row",       // horizontal layout
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 8,
@@ -136,6 +126,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    minHeight: 18,
   },
 
   // Small gray text (used in meta row)
@@ -144,11 +135,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
-  // Platforms row (chips)
+  // Platforms row (single line, no wrap)
   chipsRow: {
     flexDirection: "row",
-    flexWrap: "wrap",           // wrap chips onto new line if needed
+    alignItems: "center",
     gap: 8,
+    flexWrap: "nowrap",         // prevents height jump
+    minHeight: 22,
   },
 
   // Each platform chip container

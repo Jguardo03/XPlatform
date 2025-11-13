@@ -1,6 +1,5 @@
-// Tried to keep as close to figma mobile mock ups whilst suiting the firebase setup I created.
-// Juan can you please check how it looks on Android device and Kailing please check on iOS device. still havent fixed my virtualization issues.
-// Let me know what yall think!
+// app/(tabs)/home.tsx
+// Tried to keep as close to Figma mobile mockups whilst suiting the Firebase setup I created.
 
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -8,14 +7,14 @@ import { signOut } from "firebase/auth";
 import { addDoc, collection, getDocs, orderBy, query } from "firebase/firestore";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    FlatList,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import GameCard from "../../components/GameCard";
@@ -31,14 +30,14 @@ type Game = {
   platforms?: string[];
 };
 
-//Define user structure for Firestore data
+//Define user structure for Firestore data (not used here but kept for later)
 type User = {
   uid: string;
   email: string;
   username: string;
   createdAt: Date;
   avatarUrl: string;
-}
+};
 
 // Layout constants
 const GAP = 16;       // spacing between cards
@@ -53,8 +52,6 @@ export default function Home() {
   const [search, setSearch] = useState("");       // text input search term
   const [genreFilter, setGenreFilter] = useState("All");       // selected genre
   const [platformFilter, setPlatformFilter] = useState("All"); // selected platform
-  
-  
 
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -140,9 +137,8 @@ export default function Home() {
   }, [games, search, genreFilter, platformFilter]);
 
   // -------------------------------
-  // 🔹 Add to wtishlist
+  // 🔹 Add to wishlist
   // -------------------------------
-
   const addToWishList = async (game: Game) => {
     try {
       const user = auth.currentUser;
@@ -165,14 +161,15 @@ export default function Home() {
         type: "success",
         text1: `${game.title} added to wishlist`,
       });
-      }catch (e) {
+    } catch (e) {
       console.error("Error adding to wishlist:", e);
       Toast.show({
         type: "error",
         text1: "Error adding to wishlist",
       });
-      }
-    };
+    }
+  };
+
   // -------------------------------
   // 🔹 Loading state
   // -------------------------------
@@ -270,8 +267,16 @@ export default function Home() {
         columnWrapperStyle={numColumns > 1 ? { columnGap: GAP } : undefined}
         renderItem={({ item }) => (
           <View style={{ width: itemWidth }}>
-            {/* Game card component + add to wish list implementation */}
-            <GameCard game={item} onAddToWishList={()=> addToWishList(item)} />
+            <GameCard
+              game={item}
+              onAddToWishList={() => addToWishList(item)}
+              onPress={() =>
+                router.push({
+                  pathname: "/(tabs)/game/[id]", 
+                  params: { id: String(item.id) },
+                })
+              }
+            />
           </View>
         )}
       />
