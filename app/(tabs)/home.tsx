@@ -7,14 +7,14 @@ import { signOut } from "firebase/auth";
 import { addDoc, collection, getDocs, orderBy, query } from "firebase/firestore";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import GameCard from "../../components/GameCard";
@@ -167,9 +167,9 @@ export default function Home() {
         type: "error",
         text1: "Error adding to wishlist",
       });
-    }
+      }
   };
-
+  
   // -------------------------------
   // 🔹 Loading state
   // -------------------------------
