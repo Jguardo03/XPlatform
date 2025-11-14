@@ -194,19 +194,42 @@ export default function GameDetail() {
     }
   };
 
-  // Format Firestore Timestamp / string to a local date
   const readableDate = useMemo(() => {
-    if (!game?.releaseDate) return undefined;
+  if (!game?.releaseDate) return undefined;
+
+  // If Firestore Timestamp then convert normally
+  if (typeof game.releaseDate?.toDate === "function") {
     try {
-      const d =
-        typeof game.releaseDate?.toDate === "function"
-          ? game.releaseDate.toDate()
-          : new Date(game.releaseDate);
-      return d.toLocaleDateString();
+      return game.releaseDate.toDate().toLocaleDateString();
     } catch {
-      return String(game.releaseDate);
+      return undefined;
     }
-  }, [game?.releaseDate]);
+  }
+
+  // switched to string format "DD/MM/YYYY"
+  if (typeof game.releaseDate === "string") {
+    const parts = game.releaseDate.split("/"); // ["14","11","2024"]
+
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      const d = new Date(
+        Number(year),
+        Number(month) - 1, // JS months are 0-indexed 
+        Number(day)
+      );
+
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString();
+      }
+    }
+
+    return game.releaseDate; // fallback: show raw string
+  }
+
+  // Anything else then fallback
+  return String(game.releaseDate);
+}, [game?.releaseDate]);
+
 
   // Basic entity decoding for a few common HTML entities
   const plainDescription = useMemo(() => {
