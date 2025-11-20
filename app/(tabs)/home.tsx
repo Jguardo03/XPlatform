@@ -173,7 +173,71 @@ export default function Home() {
     });
   }, [games, search, genreFilter, platformFilter]);
 
-  
+  // -------------------------------
+  // 🔹 Add to wishlist
+  // -------------------------------
+  const addToWishList = async (game: Game) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        console.error("No user is signed in");
+        return;
+      }
+
+      await addDoc(collection(db, "users", user.uid, "wishlist"), {
+        gameId: game.id,
+        title: game.title,
+        coverUrl: game.coverUrl,
+        genres: game.genres,
+        ratingAvg: game.ratingAvg,
+        platforms: game.platforms,
+        createdAt: new Date(),
+      });
+      console.log(`${game.title} added to wishlist`);
+      Toast.show({
+        type: "success",
+        text1: `${game.title} added to wishlist`,
+      });
+    } catch (e) {
+      console.error("Error adding to wishlist:", e);
+      Toast.show({
+        type: "error",
+        text1: "Error adding to wishlist",
+      });
+    }
+  };
+
+  // -------------------------------
+  // 🔹 Remove from wishlist
+  // -------------------------------
+  const removeFromWishList = async (game: Game) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        console.error("No user is signed in");
+        return;
+      }
+
+      const wishlistDocId = wishlistMap[game.id];
+      if (!wishlistDocId) {
+        return;
+      }
+
+      await deleteDoc(doc(db, "users", user.uid, "wishlist", wishlistDocId));
+      console.log(`${game.title} removed from wishlist`);
+      Toast.show({
+        type: "success",
+        text1: `${game.title} removed from wishlist`,
+      });
+    } catch (e) {
+      console.error("Error removing from wishlist:", e);
+      Toast.show({
+        type: "error",
+        text1: "Error removing from wishlist",
+      });
+    }
+  };
+
   // -------------------------------
   // 🔹 Loading state
   // -------------------------------
@@ -269,12 +333,31 @@ export default function Home() {
           alignItems: "flex-start",
         }}
         columnWrapperStyle={numColumns > 1 ? { columnGap: GAP } : undefined}
-        renderItem={({ item }) => (
-          <View style={{ width: itemWidth }}>
-            {/* Game card component + add to wish list implementation */}
-            <GameCard game={item} onAddToWishList={()=> addToWishList(item)} onRemoveFromWishList={()=> deleteFromWishlist(item)} />
-          </View>
-        )}
+        renderItem={({ item }) => {
+          const isWishlisted = !!wishlistMap[item.id];
+
+          return (
+            <View style={{ width: itemWidth }}>
+              <GameCard
+                game={item}
+                // If not in wishlist yet, allow adding
+                onAddToWishList={
+                  !isWishlisted ? () => addToWishList(item) : undefined
+                }
+                // If already in wishlist, show pink heart and allow removing
+                onRemoveFromWishList={
+                  isWishlisted ? () => removeFromWishList(item) : undefined
+                }
+                onPress={() =>
+                  router.push({
+                    pathname: "/(tabs)/game/[id]",
+                    params: { id: String(item.id) },
+                  })
+                }
+              />
+            </View>
+          );
+        }}
       />
     </View>
   );
