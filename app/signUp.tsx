@@ -9,8 +9,8 @@
 // • Clear status/busy handling and reliable tap target
 
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useState} from "react";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { createUserWithEmailAndPassword, signOut, updateProfile } from "firebase/auth";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
@@ -19,6 +19,8 @@ import { auth, db } from "../lib/firebase";
 import { Boxes } from "../components/boxes";
 import LoginHeater from "../components/loginHeater";
 import { Typography } from "../components/Typography";
+import { saveUserPlatforms } from "../modules/user";
+
 
 export default function SignUp() {
   const router = useRouter();
@@ -58,7 +60,12 @@ export default function SignUp() {
         createdAt: serverTimestamp(),
       });
 
-      // 4) Sign out so the Login screen shows next (prevents auto-skip to tabs)
+      // 4) Add platforms to  Firestore profile
+
+      saveUserPlatforms(cred.user.uid, ownedPlatforms, prevPlatforms);
+
+
+      // 5) Sign out so the Login screen shows next (prevents auto-skip to tabs)
       await signOut(auth);
 
       setStatus("Account created. Redirecting to login…");
@@ -80,6 +87,30 @@ export default function SignUp() {
   const style = StyleSheet.create({
     option: { flexDirection: "row", alignItems: "center", gap: 10 },
   });
+
+  const platforms = [
+    "Playstation 5",
+    "Playstation 4",
+    "Xbox Series X/S",
+    "Nintendo Switch",
+    "Mobile",
+    "PC"
+  ]
+
+  const [ownedPlatforms, setOwnedPlatforms] = useState<string[]>([]);
+  const prevPlatforms:string[] = [];
+
+
+
+  function onSelectedPlatform(platform: string) {
+      setOwnedPlatforms(prev => 
+        prev.includes(platform)
+        ?prev.filter(p => p !== platform)
+        :[...prev, platform])
+      console.log(ownedPlatforms);
+      
+    }
+
 
   return (
     <ScrollView>
@@ -127,12 +158,15 @@ export default function SignUp() {
         {/* Presentational for now (wire later if you want) */}
         <View style={{ gap: 8 }}>
           <Text style={Typography.h4}>Owned Consoles</Text>
-          <View style={style.option}><Pressable style={Boxes.checkBox} /><Text style={Typography.body}>PlayStation 5</Text></View>
-          <View style={style.option}><Pressable style={Boxes.checkBox} /><Text style={Typography.body}>PlayStation 4</Text></View>
-          <View style={style.option}><Pressable style={Boxes.checkBox} /><Text style={Typography.body}>Xbox Series X/S</Text></View>
-          <View style={style.option}><Pressable style={Boxes.checkBox} /><Text style={Typography.body}>Nintendo Switch</Text></View>
-          <View style={style.option}><Pressable style={Boxes.checkBox} /><Text style={Typography.body}>Mobile</Text></View>
-          <View style={style.option}><Pressable style={Boxes.checkBox} /><Text style={Typography.body}>PC</Text></View>
+
+          {platforms.map((platform) =>(
+            <View style={style.option} key={platform}>
+              <Pressable style={[Boxes.checkBox, {backgroundColor: ownedPlatforms.includes(platform) ? "#3997fbff" : "#000000"}]}
+                onPress={() => onSelectedPlatform(platform)}
+              />
+              <Text style={Typography.body}>{platform}</Text>
+            </View>))}
+          
         </View>
 
         {!!status && <Text style={[Typography.subtitle, { color: "#fbbf24" }]}>{status}</Text>}

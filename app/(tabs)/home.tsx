@@ -20,6 +20,9 @@ import {
 import Toast from "react-native-toast-message";
 import GameCard from "../../components/GameCard";
 import { auth, db } from "../../lib/firebase";
+import {addToWishList, deleteFromWishlist} from "../../modules/wishlist";
+
+
 
 // Define game structure for Firestore data
 type Game = {
@@ -139,40 +142,6 @@ export default function Home() {
     });
   }, [games, search, genreFilter, platformFilter]);
 
-  // -------------------------------
-  // 🔹 Add to wtishlist
-  // -------------------------------
-
-  const addToWishList = async (game: Game) => {
-    try {
-      const user = auth.currentUser;
-      if (!user) {
-        console.error("No user is signed in");
-        return;
-      }
-
-      await addDoc(collection(db, "users", user.uid, "wishlist"), {
-        gameId: game.id,
-        title: game.title,
-        coverUrl: game.coverUrl,
-        genres: game.genres,
-        ratingAvg: game.ratingAvg,
-        platforms: game.platforms,
-        createdAt: new Date(),
-      });
-      console.log(`${game.title} added to wishlist`);
-      Toast.show({
-        type: "success",
-        text1: `${game.title} added to wishlist`,
-      });
-      }catch (e) {
-      console.error("Error adding to wishlist:", e);
-      Toast.show({
-        type: "error",
-        text1: "Error adding to wishlist",
-      });
-      }
-  };
   
   // -------------------------------
   // 🔹 Loading state
@@ -272,7 +241,7 @@ export default function Home() {
         renderItem={({ item }) => (
           <View style={{ width: itemWidth }}>
             {/* Game card component + add to wish list implementation */}
-            <GameCard game={item} onAddToWishList={()=> addToWishList(item)} />
+            <GameCard game={item} onAddToWishList={()=> addToWishList(item)} onDeleteFromWishList={()=> deleteFromWishlist(item)} />
           </View>
         )}
       />

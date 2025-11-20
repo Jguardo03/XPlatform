@@ -31,6 +31,10 @@ export default function Index() {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Platforms Aray var
+
+  const platforms = [];
+
   // Inputs
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -116,6 +120,7 @@ export default function Index() {
       setBusy(false);
     }
   };
+
 
   return (
     <View style={{ flex: 1 }}>

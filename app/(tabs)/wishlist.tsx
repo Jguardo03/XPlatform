@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, getDocs, orderBy, query, onSnapshot } from "firebase/firestore";
+import { deleteDoc, doc } from "firebase/firestore";
 import React, { useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
@@ -11,6 +11,8 @@ import {
 import Toast from "react-native-toast-message";
 import GameCard from "../../components/GameCard";
 import { auth, db } from "../../lib/firebase";
+import { getWishListGames, deleteFromWishlist, searchOnWishList, addToWishList} from "../../modules/wishlist";
+
 
 
 // Define game structure for Firestore data
@@ -39,7 +41,8 @@ const PAGE_PAD = 16;  // horizontal padding for the page
 
 export default function WishlistScreen() {
     const [games, setGames] = useState<Game[]>([]); // list of all games from Firestore
-      const [loading, setLoading] = useState(true);   // loader until games are fetched
+    const [loading, setLoading] = useState(true);   // loader until games are fetched
+    
 
     
     const { width } = useWindowDimensions();
@@ -48,29 +51,15 @@ export default function WishlistScreen() {
     // 🔹 Fetch favorites games from Firestore
     // -------------------------------
     useEffect(() => {
-        const fetchGames = async () => {
-        try {
-            const user = auth.currentUser;
-                if (!user) {
-                    console.error("No user is signed in");
-                    return;
-                }
-            const q = query(collection(db, "users",user.uid, "wishlist"), orderBy("createdAt", "desc"));
-            return onSnapshot(q, (querySnapshot) => {
-                const data: Game[] = querySnapshot.docs.map((d) => ({
-                    id: d.id,
-                    ...(d.data() as Omit<Game, "id">),
-                }));
-                setGames(data);
-            });
-        } catch (e) {
-            console.error("Error fetching games:", e);
-        } finally {
-            setLoading(false);
-        }
-        };
-        fetchGames();
-    }, []);
+
+        const unsubscribe = getWishListGames((games) => {
+                setGames(games);
+                setLoading(false);
+        },
+        () => setLoading(false)
+        );
+        return unsubscribe;   
+        },[]);
 
     // -------------------------------
     // 🔹 Responsive grid columns (adjust per screen width)
@@ -89,35 +78,6 @@ export default function WishlistScreen() {
     const usable = Math.max(0, width - PAGE_PAD * 2 - totalGaps);
     return Math.floor(usable / numColumns);
     }, [width, numColumns]);
-
-    // -------------------------------
-    // 🔹 Delete from wishlist 
-    // -------------------------------
-    const deleteFromWishlist = async (game: Game) => {
-        try {
-            const user = auth.currentUser;
-            if (!user) {
-                console.error("No user is signed in");
-                return;
-            }
-            await deleteDoc(doc(db, "users", user.uid, "wishlist", game.id));
-            console.log(`Game ${game.title} removed from wishlist.`);
-            // Update local state to remove the game from the list
-            setGames((prevGames) => prevGames.filter((g) => g.id !== game.id));
-            Toast.show({
-                type: 'success',
-                text1: 'Removed from Wishlist',
-                text2: `${game.title} has been removed from your wishlist.`,
-            });
-        } catch (e) {
-            console.error("Error removing game from wishlist:", e);
-            Toast.show({
-                type: 'error',
-                text1: 'Error removing from Wishlist',
-                text2: `Could not remove ${game.title} from your wishlist.`,
-            });
-        }
-    };
 
     // -------------------------------
     // 🔹 Loading state
@@ -155,7 +115,7 @@ export default function WishlistScreen() {
                     renderItem={({ item }) => (
                     <View style={{ width: itemWidth }}>
                         {/* Game card component + add to wish list implementation */}
-                        <GameCard game={item} onAddToWishList={()=> deleteFromWishlist(item)} />
+                        <GameCard game={item} onAddToWishList={()=> addToWishList(item)} onDeleteFromWishList={()=> deleteFromWishlist(item)} />
                     </View>
                     )}
                 />

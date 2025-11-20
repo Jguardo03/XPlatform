@@ -8,6 +8,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import {useWishListStatus} from "../hooks/wishListStatus"
 
 // Type definition for a single Game object passed from Firestore
 type Props = {
@@ -19,14 +20,15 @@ type Props = {
     ratingAvg?: number;     // average rating
     platforms?: string[];   // e.g. ["PC", "PS5", "Xbox"]
   };
-  onAddToWishList:() => void; // Callback when heart icon is pressed
+  onAddToWishList:() => void;// Callback to add to wishlist
+  onDeleteFromWishList:() => void;// Callback to delete from wishlist
 }; 
 
 
 // Main component: displays one game card
-export default function GameCard({ game, onAddToWishList}: Props) {
+export default function GameCard({ game, onAddToWishList, onDeleteFromWishList}: Props) {
 
-  
+  const isInWhishList = useWishListStatus(game.id);
 
   return (
     // Outer card container
@@ -46,13 +48,17 @@ export default function GameCard({ game, onAddToWishList}: Props) {
         <View style={styles.titleRow}>
           {/* Truncate long titles with ... */}
           <Text numberOfLines={1} style={styles.title}>{game.title}</Text>
+          {isInWhishList?(
+            <Pressable onPress={onDeleteFromWishList}>
+            <Ionicons name="heart-dislike" size={30} color="#cbd5e1" />
+            </Pressable>
+          ):(
+            <Pressable onPress={onAddToWishList}>
+            <Ionicons name="heart-outline" size={30} color="#cbd5e1" />
+            </Pressable>
+          )
 
-          {/* Add to wishlist presable */}
-          <Pressable onPress={onAddToWishList}>
-            
-          <Ionicons name="heart-outline" size={30} color="#cbd5e1" />
-          
-          </Pressable>
+          }         
 
         </View>
 
