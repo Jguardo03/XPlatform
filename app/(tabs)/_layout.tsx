@@ -30,6 +30,15 @@ export default function Layout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="Account"
+        options={{
+          title: "Account",
+          tabBarIcon: ({ color = "#A0A0A0", size = 24 }) => (
+            <Ionicons name="person" size={size} color={color} />
+          ),
+        }}
+      />
 
       {/* detail route lives inside tabs, but is hidden from the bar */}
       <Tabs.Screen name="game/[id]" options={{ href: null }} />
