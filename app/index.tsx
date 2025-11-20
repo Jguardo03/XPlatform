@@ -13,7 +13,7 @@
 
 import { Link, usePathname, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
 import {
   onAuthStateChanged,
@@ -123,7 +123,7 @@ export default function Index() {
 
 
   return (
-    <View style={{ flex: 1 }}>
+    <ScrollView>
       <LoginHeater />
 
       <View style={Boxes.formBox}>
@@ -183,6 +183,6 @@ export default function Index() {
           </Link>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
