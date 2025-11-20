@@ -1,5 +1,5 @@
-import { deleteDoc, doc, query, orderBy, onSnapshot, collection } from "firebase/firestore";
 import { useRouter } from "expo-router";
+import { collection, deleteDoc, doc, onSnapshot, orderBy, query } from "firebase/firestore";
 import React, { useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
@@ -43,9 +43,8 @@ const PAGE_PAD = 16;  // horizontal padding for the page
 
 export default function WishlistScreen() {
     const [games, setGames] = useState<Game[]>([]); // list of all games from Firestore
-      const [loading, setLoading] = useState(true);   // loader until games are fetched
+    const [loading, setLoading] = useState(true);   // loader until games are fetched
 
-    
     const { width } = useWindowDimensions();
     const router = useRouter();
 
@@ -53,28 +52,34 @@ export default function WishlistScreen() {
     // 🔹 Fetch favorites games from Firestore
     // -------------------------------
     useEffect(() => {
-        const fetchGames = async () => {
-        try {
-            const user = auth.currentUser;
-                if (!user) {
-                    console.error("No user is signed in");
-                    return;
-                }
-            const q = query(collection(db, "users",user.uid, "wishlist"), orderBy("createdAt", "desc"));
-            return onSnapshot(q, (querySnapshot) => {
+        const user = auth.currentUser;
+        if (!user) {
+            setLoading(false);
+            return;
+        }
+
+        const q = query(
+            collection(db, "users", user.uid, "wishlist"),
+            orderBy("createdAt", "desc")
+        );
+
+        const unsubscribe = onSnapshot(
+            q,
+            (querySnapshot) => {
                 const data: Game[] = querySnapshot.docs.map((d) => ({
                     id: d.id,
                     ...(d.data() as Omit<Game, "id">),
                 }));
                 setGames(data);
-            });
-        } catch (e) {
-            console.error("Error fetching games:", e);
-        } finally {
-            setLoading(false);
-        }
-        };
-        fetchGames();
+                setLoading(false);
+            },
+            (e) => {
+                console.error("Error fetching games:", e);
+                setLoading(false);
+            }
+        );
+
+        return unsubscribe;
     }, []);
 
     // -------------------------------
@@ -107,8 +112,6 @@ export default function WishlistScreen() {
             }
             await deleteDoc(doc(db, "users", user.uid, "wishlist", game.id));
             console.log(`Game ${game.title} removed from wishlist.`);
-            // Update local state to remove the game from the list
-            setGames((prevGames) => prevGames.filter((g) => g.id !== game.id));
             Toast.show({
                 type: 'success',
                 text1: 'Removed from Wishlist',
@@ -159,8 +162,17 @@ export default function WishlistScreen() {
                 columnWrapperStyle={numColumns > 1 ? { columnGap: GAP } : undefined}
                 renderItem={({ item }) => (
                     <View style={{ width: itemWidth }}>
-                        {/* Game card component + add to wish list implementation */}
-                        <GameCard game={item} onAddToWishList={()=> deleteFromWishlist(item)} />
+                        {/* Game card component + remove from wishlist implementation */}
+                        <GameCard
+                            game={item}
+                            onRemoveFromWishList={() => deleteFromWishlist(item)}
+                            onPress={() =>
+                                router.push({
+                                    pathname: "/(tabs)/game/[id]",
+                                    params: { id: String(item.gameId ?? item.id) },
+                                })
+                            }
+                        />
                     </View>
                 )}
             />

@@ -25,43 +25,27 @@ type Props = {
   onPress?: () => void;
 };
 
-
-// Main component: displays one game card
-export default function GameCard({ game, onAddToWishList, onRemoveFromWishList}: Props) {
-
-  const isInWhishList = useWishListStatus(game.id);
+export default function GameCard({ game, onAddToWishList, onRemoveFromWishList, onPress }: Props) {
+  const isInWishlistContext = !!onRemoveFromWishList;
+  const onPressHeart = isInWishlistContext ? onRemoveFromWishList : onAddToWishList;
 
   return (
-    // Outer card container
-    <View style={styles.card}>
-      {/* Cover image (banner at top of card) */}
-      <Image
-        // fallback placeholder if no image available
-        source={{ uri: game.coverUrl || "" }} // Should add url here later
-        style={styles.cover}
-        resizeMode="cover" // crop to fill width nicely
-      />
-
-      {/* Card body (text content below image) */}
-      <View style={styles.body}>
-
-        {/* ── Title row: game name + heart icon ── */}
-        <View style={styles.titleRow}>
-          {/* Truncate long titles with ... */}
-          <Text numberOfLines={1} style={styles.title}>{game.title}</Text>
-          {isInWhishList?(
-            <Pressable onPress={onRemoveFromWishList}>
-            <Ionicons name="heart-dislike" size={30} color="#cbd5e1" />
-            </Pressable>
-          ):(
-            <Pressable onPress={onAddToWishList}>
-            <Ionicons name="heart-outline" size={30} color="#cbd5e1" />
-            </Pressable>
-          )
-
-          }         
-
-        </View>
+    <Pressable onPress={onPress} android_ripple={{ color: "#111827" }}>
+      <View style={styles.card}>
+        <Image source={{ uri: game.coverUrl || "" }} style={styles.cover} resizeMode="cover" />
+        <View style={styles.body}>
+          <View style={styles.titleRow}>
+            <Text numberOfLines={1} style={styles.title}>{game.title}</Text>
+            {!!onPressHeart && (
+              <Pressable onPress={(e) => { e.stopPropagation(); onPressHeart?.(); }}>
+                <Ionicons
+                  name={isInWishlistContext ? "heart" : "heart-outline"}
+                  size={28}
+                  color={isInWishlistContext ? "#ef4444" : "#cbd5e1"}
+                />
+              </Pressable>
+            )}
+          </View>
 
           <View style={styles.metaRow}>
             {(game.genres ?? []).slice(0, 2).map(g => (
@@ -90,6 +74,7 @@ export default function GameCard({ game, onAddToWishList, onRemoveFromWishList}:
           </View>
         </View>
       </View>
+    </Pressable>
   );
 }
 
