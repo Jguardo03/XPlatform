@@ -12,7 +12,16 @@ export const Boxes = StyleSheet.create({
         backgroundColor:'#111827',
         borderRadius:10,
     },
-
+    formBox2:{
+        display:'flex',
+        flexDirection:'column',
+        margin:20,
+        paddingVertical:20,
+        paddingHorizontal:20,
+        gap:20,
+        backgroundColor:'#111827',
+        borderRadius:10,
+    },
     textImputBox:{
         backgroundColor:'#000000',
         padding:15,

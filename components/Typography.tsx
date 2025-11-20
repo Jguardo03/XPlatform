@@ -49,7 +49,7 @@ bodySmall: {
   // SPECIAL TEXT TYPES
 subtitle: {
     fontSize: 16,
-    fontWeight: 'normal',
+    fontWeight: 'bold',
     color: '#B3B3B3',           // Light gray for secondary text
     lineHeight: 22,
 } as TextStyle,
@@ -81,6 +81,15 @@ link: {
     fontWeight: 'normal',
     color: '#0A84FF',           // iOS blue (bright)
     textDecorationLine: 'underline',
+} as TextStyle,
+
+// LINK TEXT (No text decoration)
+
+link2: {
+    fontSize: 16,
+    fontWeight: 'normal',
+    color: '#0A84FF',           // iOS blue (bright)
+    textDecorationLine: 'none',
 } as TextStyle,
 
   // ERROR TEXT (Bright red for visibility)
