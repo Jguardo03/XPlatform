@@ -1,11 +1,19 @@
-// Tried to keep as close to figma mobile mock ups whilst suiting the firebase setup I created.
-// Juan can you please check how it looks on Android device and Kailing please check on iOS device. still havent fixed my virtualization issues.
-// Let me know what yall think!
+// app/(tabs)/home.tsx
+// Tried to keep as close to Figma mobile mockups whilst suiting the Firebase setup I created.
 
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
-import { addDoc, collection, doc, getDocs, onSnapshot, orderBy, query } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+} from "firebase/firestore";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -41,7 +49,7 @@ type User = {
   username: string;
   createdAt: Date;
   avatarUrl: string;
-}
+};
 
 // Layout constants
 const GAP = 16;       // spacing between cards
@@ -56,8 +64,9 @@ export default function Home() {
   const [search, setSearch] = useState("");       // text input search term
   const [genreFilter, setGenreFilter] = useState("All");       // selected genre
   const [platformFilter, setPlatformFilter] = useState("All"); // selected platform
-  
-  
+
+  // Map of gameId -> wishlist document id (used to show pink heart + remove)
+  const [wishlistMap, setWishlistMap] = useState<Record<string, string>>({});
 
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -82,6 +91,28 @@ export default function Home() {
       }
     };
     fetchGames();
+  }, []);
+
+  // -------------------------------
+  // 🔹 Listen to wishlist so hearts stay in sync
+  // -------------------------------
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const q = query(collection(db, "users", user.uid, "wishlist"));
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const next: Record<string, string> = {};
+      snap.forEach((d) => {
+        const data = d.data() as { gameId?: string };
+        if (data.gameId) {
+          next[data.gameId] = d.id;
+        }
+      });
+      setWishlistMap(next);
+    });
+
+    return unsubscribe;
   }, []);
 
   // -------------------------------
@@ -241,7 +272,7 @@ export default function Home() {
         renderItem={({ item }) => (
           <View style={{ width: itemWidth }}>
             {/* Game card component + add to wish list implementation */}
-            <GameCard game={item} onAddToWishList={()=> addToWishList(item)} onDeleteFromWishList={()=> deleteFromWishlist(item)} />
+            <GameCard game={item} onAddToWishList={()=> addToWishList(item)} onRemoveFromWishList={()=> deleteFromWishlist(item)} />
           </View>
         )}
       />

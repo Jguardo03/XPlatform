@@ -98,5 +98,3 @@ export  function searchOnWishList(gameid: string, callback:(isInWishList: boolea
     });
     return unsubscribe;
 }
-
-
