@@ -85,7 +85,7 @@ const COVER_H = Platform.OS === "web" ? 220 : 200;
 const styles = StyleSheet.create({
   // Outer card wrapper
   card: {
-    backgroundColor: "#0f172a",
+    backgroundColor: "#111827",
     borderRadius: 14,
     overflow: "hidden",         // ensures rounded corners apply to image
     borderWidth: 1,

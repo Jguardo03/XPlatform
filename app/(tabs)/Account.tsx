@@ -2,32 +2,33 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
 import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  onSnapshot,
-  orderBy,
-  query,
+    addDoc,
+    collection,
+    deleteDoc,
+    doc,
+    getDoc,
+    getDocs,
+    onSnapshot,
+    orderBy,
+    query,
 } from "firebase/firestore";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    FlatList,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { auth, db } from "../../lib/firebase";
 
-import{Game} from "../../modules/games";
+
 import { User } from "../../modules/user";
 import{ Boxes} from "../../components/boxes"
 import { Typography } from "../../components/Typography";
@@ -36,8 +37,64 @@ import { Typography } from "../../components/Typography";
 const GAP = 16;
 const PAGE_PAD = 16;
 
+
+type Platform = {
+        id: string;
+        platform: string;
+}
+
 export default function Account(){
 
+    const router = useRouter();
+
+    const [userName, setUserName]=useState("");
+    const [email, setEmail]=useState("");
+    const [password, setPassword]=useState("");
+    const [ownedPlatforms, setOwnedPlatforms]=useState<Platform[]>([]);
+    
+    const getUserData = async () => {
+        const user = auth.currentUser;
+            if (!user) {
+                console.error("No user is signed in");
+                return;
+            }
+
+            const docRef = doc(db, "users", user.uid);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data() as User;
+                setUserName(data.username);
+                
+                setEmail(data.email);
+            } else {
+            console.log("No such document!");
+            }
+            const q = query(collection(db, "users", user.uid, "platforms"));
+            const snap = await getDocs(q);
+            const data: Platform[] = snap.docs.map((d) => ({
+                id: d.id,
+                ...(d.data() as Omit<Platform, "id">),
+                
+            }));
+        setOwnedPlatforms(data);
+        // console.info(ownedPlatforms)
+    };
+    getUserData();
+    
+
+    
+
+
+
+    const handleSignOut = async () => {
+        try {
+            await signOut(auth);
+            router.replace("/"); // navigate back to login
+        } catch (e) {
+            console.error("Error signing out:", e);
+        }
+    };
+    
     return(
         <ScrollView style={styles.screen}>
             <View style={styles.topBar}>
@@ -54,19 +111,33 @@ export default function Account(){
                     <Ionicons name="person-outline" size={18} color="white" />
                     <Text style={Typography.subtitle}>Username</Text>
                 </View>
-                <Text style={[Typography.body, Boxes.textImputBox]}>Username</Text>
+                <Text style={[Typography.body, Boxes.textImputBox]}>{userName}</Text>
                 <View style={styles.iconText}>
                     <Ionicons name="mail-outline" size={18} color="white" />
                     <Text style={Typography.subtitle}>Email</Text>
                 </View>
-                <Text style={[Typography.body, Boxes.textImputBox]}>example@email.com</Text>
+                <Text style={[Typography.body, Boxes.textImputBox]}>{email}</Text>
                 <View style={styles.iconText}>
                     <Ionicons name="game-controller-outline" size={18} color="white" />
                     <Text style={Typography.subtitle}>Owned Consoles</Text>
+                </View>
+                <View style={styles.iconText}>
+                {ownedPlatforms.map((ownedPlatform) => (
+                    <View style={styles.option} key={ownedPlatform.platform}>
+                        <Text style={[styles.metaSmall,styles.chip]}>{ownedPlatform.platform}</Text>
+                    </View>
+                ))}
                     
                 </View>
             </View>
-
+            <View style={Boxes.formBox}>
+                <View style={styles.iconButton}>
+                    <Ionicons name="exit-outline" size={26} color="red" />
+                    <Pressable onPress={handleSignOut}>
+                        <Text style={[Typography.subtitle, {color: "red"}]}>Logout</Text>
+                    </Pressable>
+                </View>
+            </View>
         </ScrollView>
     );
 }
@@ -77,7 +148,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#0b1220",
         paddingTop: 40,
     },
-        topBar: {
+    topBar: {
         paddingHorizontal: PAGE_PAD,
         flexDirection: "row",
         justifyContent: "space-between",
@@ -96,7 +167,26 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 16,
-    }
+    },
+    option: { flexDirection: "row", alignItems: "center", gap: 10 },
+    metaSmall: {
+    fontSize: 16,
+    color: "#60A5fA",
+    
+    },
 
+    chip: {
+    backgroundColor: "#1F2937",
+    borderWidth: 1,
+    borderColor: "#1f2937",
+    borderRadius: 6,          // full rounded pill shape
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    },
+    iconButton:{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8
+    }
 
 });

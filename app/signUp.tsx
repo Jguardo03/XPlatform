@@ -9,8 +9,8 @@
 // • Clear status/busy handling and reliable tap target
 
 import { useRouter } from "expo-router";
-import { useState} from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { createUserWithEmailAndPassword, signOut, updateProfile } from "firebase/auth";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
@@ -70,7 +70,7 @@ export default function SignUp() {
 
       setStatus("Account created. Redirecting to login…");
 
-      // 5) Back to login (index.tsx maps to "/")
+      // 6) Back to login (index.tsx maps to "/")
       router.replace("/");
     } catch (err: any) {
       const code = err?.code || "";
@@ -184,7 +184,7 @@ export default function SignUp() {
 
         <View style={{ flexDirection: "row", justifyContent: "center", gap: 5 }}>
           <Text style={Typography.subtitle}>Already have an account?</Text>
-          <Text style={Typography.link} onPress={() => router.back()}>
+          <Text style={Typography.link} onPress={() => router.replace("/")}>
             Log In
           </Text>
         </View>
