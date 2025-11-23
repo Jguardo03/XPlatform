@@ -34,6 +34,16 @@ export const Boxes = StyleSheet.create({
         borderRadius:10,
         textAlign:'center',
         justifyContent:'center',
+        alignItems:'center'
+    },
+    button2:{
+        display:'flex',
+        backgroundColor:'#1F2937',
+        padding:15,
+        borderRadius:10,
+        textAlign:'center',
+        justifyContent:'center',
+        alignItems:'center'
     },
     checkBox:{
         width:30,

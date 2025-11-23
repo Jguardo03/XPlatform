@@ -32,6 +32,7 @@ import { auth, db } from "../../lib/firebase";
 import { User } from "../../modules/user";
 import{ Boxes} from "../../components/boxes"
 import { Typography } from "../../components/Typography";
+import { hide } from "expo-router/build/utils/splash";
 
 
 const GAP = 16;
@@ -43,15 +44,32 @@ type Platform = {
         platform: string;
 }
 
+
+
+
+
+
 export default function Account(){
 
     const router = useRouter();
-
+    const [busy,setBusy]=useState(false);
     const [userName, setUserName]=useState("");
     const [email, setEmail]=useState("");
     const [password, setPassword]=useState("");
     const [ownedPlatforms, setOwnedPlatforms]=useState<Platform[]>([]);
+    const [display,setDisplay]=useState(true);
+    const [edit,setEdit]=useState(false);
+
+    const platforms = [
+    "Playstation 5",
+    "Playstation 4",
+    "Xbox Series X/S",
+    "Nintendo Switch",
+    "Mobile",
+    "PC"
+    ]
     
+
     const getUserData = async () => {
         const user = auth.currentUser;
             if (!user) {
@@ -81,9 +99,16 @@ export default function Account(){
     };
     getUserData();
     
+    const onEditPressed = () => {
+        setDisplay(false);
+        setEdit(true);
 
-    
+    }
 
+    const onCancelPressed = () => {
+        setDisplay(true);
+        setEdit(false);
+    }
 
 
     const handleSignOut = async () => {
@@ -103,7 +128,7 @@ export default function Account(){
             <View style={Boxes.formBox2}>
                 <View style={styles.titleBar}>
                     <Text style={Typography.h4}>Profile</Text>
-                    <Pressable>
+                    <Pressable onPress={onEditPressed}>
                         <Text style={Typography.link2}>Edit</Text>
                     </Pressable>
                 </View>
@@ -111,24 +136,69 @@ export default function Account(){
                     <Ionicons name="person-outline" size={18} color="white" />
                     <Text style={Typography.subtitle}>Username</Text>
                 </View>
-                <Text style={[Typography.body, Boxes.textImputBox]}>{userName}</Text>
+                {display &&(
+                    <Text style={[Typography.body, Boxes.textImputBox]}>{userName}</Text>
+                )}
+                {edit &&(
+                    <TextInput
+                    placeholder={userName}
+                    value={userName}
+                    onChangeText={setUserName}
+                    style={[Typography.body, Boxes.textImputBox]}/>
+                )}
                 <View style={styles.iconText}>
                     <Ionicons name="mail-outline" size={18} color="white" />
                     <Text style={Typography.subtitle}>Email</Text>
                 </View>
-                <Text style={[Typography.body, Boxes.textImputBox]}>{email}</Text>
+                {display &&(
+                    <Text style={[Typography.body, Boxes.textImputBox]}>{email}</Text>
+                )}
+                {edit && (
+                    <TextInput
+                    placeholder={email}
+                    value={email}
+                    onChangeText={setEmail}
+                    style={[Typography.body, Boxes.textImputBox]}/>
+                )}
                 <View style={styles.iconText}>
                     <Ionicons name="game-controller-outline" size={18} color="white" />
                     <Text style={Typography.subtitle}>Owned Consoles</Text>
                 </View>
-                <View style={styles.iconText}>
+                {display &&(
+                    <View style={[styles.iconText]}>
                 {ownedPlatforms.map((ownedPlatform) => (
                     <View style={styles.option} key={ownedPlatform.platform}>
                         <Text style={[styles.metaSmall,styles.chip]}>{ownedPlatform.platform}</Text>
                     </View>
                 ))}
-                    
                 </View>
+                )}
+                {edit &&(
+                    <>
+                        <View style={[{ gap: 8}]}>
+                            {platforms.map((platform)=>(
+                                <View style={styles.option} key={platform}>
+                                <Pressable style={Boxes.checkBox}/>
+                                <Text style={Typography.body}>{platform}</Text>
+                                </View>
+                            ))}
+                        </View>
+                        <Pressable
+                            disabled={busy}
+                            accessibilityRole="button"
+                            style={[Boxes.button]}>
+                            <Text style={[Typography.h4, { color: "#FFFFFF"}]}>{busy ? "Please wait…" : "Save Changes"}</Text>
+                        </Pressable>
+                        <Pressable
+                            onPress={onCancelPressed}
+                            disabled={busy}
+                            accessibilityRole="button"
+                            style={[Boxes.button2]}>
+                            <Text style={[Typography.h4, { color: "#FFFFFF"}]}>{busy ? "Please wait…" : "Cancel"}</Text>
+                        </Pressable>
+                    </>
+                )}
+                
             </View>
             <View style={Boxes.formBox}>
                 <View style={styles.iconButton}>
@@ -169,6 +239,7 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     option: { flexDirection: "row", alignItems: "center", gap: 10 },
+    optionColumn: { flexDirection: "column", alignItems: "center", gap: 10 },
     metaSmall: {
     fontSize: 16,
     color: "#60A5fA",
@@ -187,6 +258,5 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 8
-    }
-
+    },
 });
