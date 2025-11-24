@@ -2,37 +2,30 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
 import {
-    addDoc,
     collection,
-    deleteDoc,
     doc,
     getDoc,
     getDocs,
-    onSnapshot,
-    orderBy,
     query,
 } from "firebase/firestore";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { use, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
     Pressable,
     ScrollView,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    useWindowDimensions,
     View,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { auth, db } from "../../lib/firebase";
 
 
-import { User } from "../../modules/user";
+import { User,updateUserName,updateUserEmail, saveUserPlatforms } from "../../modules/user";
 import{ Boxes} from "../../components/boxes"
 import { Typography } from "../../components/Typography";
-import { hide } from "expo-router/build/utils/splash";
+import { updateCurrentUser, updateEmail } from "firebase/auth";
 
 
 const GAP = 16;
@@ -68,6 +61,16 @@ export default function Account(){
     "Mobile",
     "PC"
     ]
+    const [tempOwnedPlatforms, setTempOwnedPlatforms]=useState<string[]>([]);
+
+
+    const onSelectedPlatform = (platform: string) => {
+        setTempOwnedPlatforms(prev => 
+            prev.includes(platform)
+            ?prev.filter(p => p !== platform)
+            :[...prev, platform])
+        console.log(tempOwnedPlatforms);
+    }
     
 
     const getUserData = async () => {
@@ -98,17 +101,24 @@ export default function Account(){
         // console.info(ownedPlatforms)
     };
     getUserData();
+
+
     
     const onEditPressed = () => {
         setDisplay(false);
         setEdit(true);
-
+        
     }
 
     const onCancelPressed = () => {
         setDisplay(true);
         setEdit(false);
     }
+
+    useEffect(() => {
+        if(edit){
+            setTempOwnedPlatforms(ownedPlatforms.map(p => p.platform));
+        }}, [edit]);
 
 
     const handleSignOut = async () => {
@@ -120,6 +130,29 @@ export default function Account(){
         }
     };
     
+    const onSavePressed = async () => {
+        setBusy(true);
+        const user = auth.currentUser;
+        if (!user) {
+            console.error("No user is signed in");
+            setBusy(false);
+            return;
+        } 
+        updateCurrentUser(auth, user);
+        
+        updateUserName(user.uid, userName);
+        updateUserEmail(user.uid, email);
+        updateEmail(user, email).catch((error) => {
+            console.error("Error updating email in auth:", error);
+        });
+        saveUserPlatforms(user.uid, tempOwnedPlatforms, ownedPlatforms.map(p => p.platform));
+        setDisplay(true);
+        setEdit(false);
+        setBusy(false);
+
+
+    }
+
     return(
         <ScrollView style={styles.screen}>
             <View style={styles.topBar}>
@@ -142,7 +175,6 @@ export default function Account(){
                 {edit &&(
                     <TextInput
                     placeholder={userName}
-                    value={userName}
                     onChangeText={setUserName}
                     style={[Typography.body, Boxes.textImputBox]}/>
                 )}
@@ -156,7 +188,6 @@ export default function Account(){
                 {edit && (
                     <TextInput
                     placeholder={email}
-                    value={email}
                     onChangeText={setEmail}
                     style={[Typography.body, Boxes.textImputBox]}/>
                 )}
@@ -178,15 +209,17 @@ export default function Account(){
                         <View style={[{ gap: 8}]}>
                             {platforms.map((platform)=>(
                                 <View style={styles.option} key={platform}>
-                                <Pressable style={Boxes.checkBox}/>
+                                <Pressable style={[Boxes.checkBox, {backgroundColor: tempOwnedPlatforms.includes( platform) ? "#3997fbff" : "#000000"}]} onPress={() => onSelectedPlatform(platform)}/>
                                 <Text style={Typography.body}>{platform}</Text>
                                 </View>
                             ))}
                         </View>
                         <Pressable
+                            onPress={onSavePressed}
+                            
                             disabled={busy}
                             accessibilityRole="button"
-                            style={[Boxes.button]}>
+                            style={[Boxes.button, {opacity: busy ? 0.6 : 1}]}>
                             <Text style={[Typography.h4, { color: "#FFFFFF"}]}>{busy ? "Please wait…" : "Save Changes"}</Text>
                         </Pressable>
                         <Pressable

@@ -41,3 +41,13 @@ export async function saveUserPlatforms(userId: string, selectedPlatforms: strin
 
     
 }
+
+export async function updateUserName(userId:string, newUserName:string){
+    const userRef = doc(db,"users",userId);
+    await setDoc(userRef,{username:newUserName},{merge:true});
+}
+
+export async function updateUserEmail(userId:string, newEmail:string){
+    const userRef = doc(db,"users",userId);
+    await setDoc(userRef,{email:newEmail},{merge:true});
+}

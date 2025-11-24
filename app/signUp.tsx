@@ -58,7 +58,7 @@ export default function SignUp() {
         email: e,
         avatarUrl: "",
         createdAt: serverTimestamp(),
-      });
+      },{ merge: true });
 
       // 4) Add platforms to  Firestore profile
 
